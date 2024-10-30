@@ -1,5 +1,4 @@
 local lib = require('neotest.lib')
-local xml = lib.xml
 
 local test_query = [[
     ;; Test class
@@ -57,11 +56,14 @@ return {
         return true
     end,
     is_test_file = function(file_path)
+        if file_path:find('AppTest.java$') or file_path:find('AppTest1.java$') then
+            return true
+        end
         -- TODO do something better here.
-        return true
+        return false
     end,
-    discover_posistions = function(file_path)
-        return lib.treesitter.parse_positions(file_path, test_query, { nested_namespaces = true })
+    discover_positions = function(file_path)
+        return lib.treesitter.parse_positions(file_path, test_query, {})
     end,
     build_spec = function(args)
         local position = args.tree:data()

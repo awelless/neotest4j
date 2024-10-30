@@ -33,13 +33,15 @@ end
 --- @param testcase table
 --- @return string
 local function retrieve_result(testcase)
-    local failure = testcase.failure
-
-    if failure == nil then
-        return 'passed'
+    if testcase.failure ~= nil then
+        return 'failed'
     end
 
-    return 'failed'
+    if testcase.skipped ~= nil then
+        return 'skipped'
+    end
+
+    return 'passed'
 end
 
 --- @param report table
@@ -48,8 +50,13 @@ local function process_report(report)
     local results = {}
 
     local testsuite = report.testsuite
+    -- If there is only one testcase, it's returned as an object table.
+    local testcases = #testsuite.testcase > 1 and testsuite.testcase or { testsuite.testcase }
 
-    for _, testcase in pairs(testsuite.testcase) do
+    for _, testcase in pairs(testcases) do
+        if testcase._attr == nil then
+            error(vim.inspect(testsuite) .. '\n' .. vim.inspect(testcases) .. '\n' .. vim.inspect(testcase))
+        end
         local key = new_result_key(testcase._attr.classname, testcase._attr.name)
         results[key] = retrieve_result(testcase)
     end
@@ -57,7 +64,11 @@ local function process_report(report)
     return results
 end
 
-return function(spec, result, tree)
+---@param spec neotest.RunSpec
+---@param result neotest.StrategyResult
+---@param tree neotest.Tree
+---@return table<string, neotest.Result>
+local function collect_test_results(spec, result, tree)
     local junit_results = {}
 
     local test_results_dir = spec.context.test_results_dir
@@ -65,7 +76,9 @@ return function(spec, result, tree)
 
     for _, path in ipairs(test_results) do
         local junit_report = parse_file(path)
-        vim.tbl_extend('error', { junit_results, process_report(junit_report) } )
+        for key, test_res in pairs(process_report(junit_report)) do
+            junit_results[key] = test_res
+        end
     end
 
     local results = {}
@@ -85,3 +98,5 @@ return function(spec, result, tree)
 
     return results
 end
+
+return collect_test_results
