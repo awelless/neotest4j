@@ -1,23 +1,5 @@
 local lib = require('neotest.lib')
 
-local test_query = [[
-    ;; Test class
-    (class_declaration
-        name: (identifier) @namespace.name
-    ) @namespace.definition
-
-    ;; @Test and @ParameterizedTest functions
-    (method_declaration
-        (modifiers
-          (marker_annotation
-              name: (identifier) @annotation
-                  (#any-of? @annotation "Test" "ParameterizedTest")
-              )
-        )
-        name: (identifier) @test.name
-    ) @test.definition
-]]
-
 local find_root = lib.files.match_root_pattern('settings.gradle.kts', 'settings.gradle')
 
 local function get_gradle_executable(root)
@@ -36,7 +18,7 @@ local function get_test_results_dir(executable, root)
 
     local code, out = lib.process.run(command, { stdout = true })
     if code ~= 0 then
-        return 'error'
+        error('Failed to get testResultsDir. Error code: ' .. code .. '. Output: ' .. out)
     end
 
     for _, line in pairs(vim.split(out.stdout, '\n')) do
@@ -45,7 +27,7 @@ local function get_test_results_dir(executable, root)
         end
     end
 
-    return 'error'
+    error('testResultsDir property was not found')
 end
 
 return {
@@ -56,15 +38,10 @@ return {
         return true
     end,
     is_test_file = function(file_path)
-        if file_path:find('AppTest.java$') or file_path:find('AppTest1.java$') then
-            return true
-        end
         -- TODO do something better here.
-        return false
+        return true
     end,
-    discover_positions = function(file_path)
-        return lib.treesitter.parse_positions(file_path, test_query, {})
-    end,
+    discover_positions = require('neotest4j.positions.discover_positions'),
     build_spec = function(args)
         local position = args.tree:data()
         local root = find_root(position.path)
