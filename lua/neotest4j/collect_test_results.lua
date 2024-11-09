@@ -23,18 +23,29 @@ local function new_result_key(class_name, method_name)
     return class_name:gsub('%$', '.') .. '.' .. method_name:gsub('%(.*%)', '')
 end
 
---- @param testcase table
---- @return string
-local function retrieve_status(testcase)
+--- @param testcase table a junit use case table
+--- @return table see neotest.Result
+local function convert_to_result(testcase)
+    local types = require('neotest.types')
+
     if testcase.failure ~= nil then
-        return 'failed'
+        return {
+            status = types.ResultStatus.failed,
+            short = testcase.failure._attr.message,
+        }
     end
 
     if testcase.skipped ~= nil then
-        return 'skipped'
+        return {
+            status = types.ResultStatus.skipped,
+            short = 'The test was skipped.',
+        }
     end
 
-    return 'passed'
+    return {
+        status = types.ResultStatus.passed,
+        short = 'The test was passed.',
+    }
 end
 
 --- @param report table
@@ -46,7 +57,7 @@ local function process_report(report, results)
 
     for _, testcase in pairs(testcases) do
         local key = new_result_key(testcase._attr.classname, testcase._attr.name)
-        results[key] = { status = retrieve_status(testcase) }
+        results[key] = convert_to_result(testcase)
     end
 end
 
