@@ -1,18 +1,20 @@
-local lib = require('neotest.lib')
-local xml = lib.xml
-
 local function find_test_result_files(base_dir)
+    local files = require('neotest.lib').files
+
     local filter = function(name, _, _)
-        return name:find('\\.xml$') ~= nil
+        return name:find('%.xml$') ~= nil
     end
 
-    return lib.files.find(base_dir, { filter_dir = filter })
+    return files.find(base_dir, { filter_dir = filter })
 end
 
 --- @param path string
 --- @return table
 local function parse_file(path)
-    local content = lib.files.read(path)
+    local files = require('neotest.lib').files
+    local xml = require('neotest.lib').xml
+
+    local content = files.read(path)
     return xml.parse(content)
 end
 
@@ -70,7 +72,10 @@ end
 ---@param tree neotest.Tree
 ---@return table<string, neotest.Result>
 return function(spec, result, tree)
-    local test_results_dir = spec.context.test_results_dir
+    ---@type Project
+    local project = spec.context.project
+
+    local test_results_dir = project:get_test_results_dir()
     local test_results = find_test_result_files(test_results_dir)
 
     local results = {}
