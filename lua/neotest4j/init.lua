@@ -1,14 +1,19 @@
+---Filter directories when searching for test files
+---@param _ string a name of a directory.
+---@param rel_path string a path to the directory, relative to the root.
+---@param root string the root directory of the project.
+---@return boolean
+local function filter_dir(_, rel_path, root)
+    local Project = require('neotest4j.project')
+    local p = Project:new(root)
+    return p:filter_dir(rel_path)
+end
+
 return {
     name = 'neotest4j',
-    root = require('neotest4j.gradle').find_project_root,
-    filter_dir = function(name, rel_path, root)
-        -- TODO do something better here.
-        return true
-    end,
-    is_test_file = function(file_path)
-        -- TODO do something better here.
-        return true
-    end,
+    root = require('neotest4j.project.functions').find_project_root,
+    filter_dir = filter_dir,
+    is_test_file = require('neotest4j.project.functions').is_test_file,
     discover_positions = require('neotest4j.positions.discover_positions'),
     build_spec = function(args)
         local gradle = require('neotest4j.gradle')
