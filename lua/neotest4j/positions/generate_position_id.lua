@@ -18,8 +18,13 @@ end
 --- @param parents table[]
 --- @return string
 return function (position, parents)
+    local log = require('neotest.logging')
+
     local namespace_prefix = calculate_namespace_prefix(parents)
     local position_name = position.name
+    local position_id = namespace_prefix .. position_name
 
-    return namespace_prefix .. position_name
+    log.trace('Position:', position, 'Position id:', position_id)
+
+    return position_id
 end

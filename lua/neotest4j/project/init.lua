@@ -29,7 +29,11 @@ end
 ---@param rel_path string path to a directory, relative to the project root.
 ---@return boolean
 function Project:filter_dir(rel_path)
-    return rel_path == 'src' or rel_path == 'src/test' or rel_path:match('^src/test/java')
+    local log = require('neotest.logging')
+
+    local test_dir = rel_path == 'src' or rel_path == 'src/test' or rel_path:match('^src/test/java')
+    log.debug('Filtering test directory:', rel_path, 'Is test dir:', tostring(test_dir))
+    return test_dir
 end
 
 ---Builds a spec to run the tests.

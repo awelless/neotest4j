@@ -72,6 +72,8 @@ end
 ---@param tree neotest.Tree
 ---@return table<string, neotest.Result>
 return function(spec, result, tree)
+    local log = require('neotest.logging')
+
     ---@type Project
     local project = spec.context.project
 
@@ -84,6 +86,8 @@ return function(spec, result, tree)
         local junit_report = parse_file(path)
         process_report(junit_report, results)
     end
+
+    log.trace('Test results:', results)
 
     return results
 end

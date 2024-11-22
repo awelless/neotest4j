@@ -1,6 +1,6 @@
 ---@class Gradle
 ---@field _root_dir string private
----@field _executable string private
+---@field _executable table private
 local Gradle = {}
 
 ---Resolves an executable command to run gradle.
@@ -12,11 +12,7 @@ local function get_gradle_executable(root_dir)
     local gradlew_path = root_dir .. files.sep .. 'gradlew'
     local wrapper_exists = files.exists(gradlew_path)
 
-    if wrapper_exists then
-        return gradlew_path
-    else
-        return 'gradle'
-    end
+    return wrapper_exists and gradlew_path or 'gradle'
 end
 
 function Gradle:new(root_dir)
@@ -30,13 +26,32 @@ function Gradle:new(root_dir)
     return g
 end
 
+---Builds a full command to run.
+---@param gradle Gradle
+---@param ... string
+---@return string[]
+local function build_command_spec(gradle, ...)
+    local log = require('neotest.logging')
+
+    local command = { gradle._executable, '--project-dir', gradle._root_dir }
+
+    for _, v in ipairs {...} do
+        table.insert(command, v)
+    end
+
+    log.info('Building gradle command:', table.concat(command, ' '))
+
+    return command
+end
+
 ---Returns a path to a directory where the test results are stored.
 ---@return string
 function Gradle:get_test_results_dir()
+    local log = require('neotest.logging')
     local files = require('neotest.lib').files
     local process = require('neotest.lib').process
 
-    local command = { self._executable, '--project-dir', self._root_dir, 'properties', '--property', 'testResultsDir' }
+    local command = build_command_spec(self, 'properties', '--property', 'testResultsDir')
 
     local code, out = process.run(command, { stdout = true })
     if code ~= 0 then
@@ -45,7 +60,9 @@ function Gradle:get_test_results_dir()
 
     for _, line in pairs(vim.split(out.stdout, '\n')) do
         if line:match('testResultsDir: ') then
-            return line:gsub('testResultsDir: ', '') .. files.sep .. 'test'
+            local test_results_dir = line:gsub('testResultsDir: ', '') .. files.sep .. 'test'
+            log.debug('Using test results dir:', test_results_dir)
+            return test_results_dir
         end
     end
 
@@ -56,7 +73,7 @@ end
 ---@param args table see neotest.RunArgs
 ---@return table see neotest.RunSpec
 function Gradle:build_run_test_command(args)
-    return { self._executable, '--project-dir', self._root_dir, 'test' }
+    return build_command_spec(self, 'test')
 end
 
 return Gradle
