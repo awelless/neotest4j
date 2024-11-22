@@ -52,6 +52,10 @@ end
 --- @param results table<string, table> Modified in-place!
 local function process_report(report, results)
     local testsuite = report.testsuite
+    if testsuite == nil or testsuite.testcase == nil then
+        return
+    end
+
     -- If there is only one testcase, it's returned as an object table.
     local testcases = #testsuite.testcase > 1 and testsuite.testcase or { testsuite.testcase }
 
