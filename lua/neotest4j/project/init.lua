@@ -43,10 +43,10 @@ function Project:build_run_test_command(args)
     return self._build_system:build_run_test_command(args)
 end
 
----Returns a path to a directory where the test results are stored.
----@return string
-function Project:get_test_results_dir()
-    return self._build_system:get_test_results_dir()
+---Collect the results of executed tests.
+---@return table<string, table> see neotest.Result
+function Project:collect_test_results()
+   return self._build_system:collect_test_results()
 end
 
 return Project

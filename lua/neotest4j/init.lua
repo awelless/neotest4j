@@ -17,15 +17,25 @@ local function build_spec(args)
     local path = tree:data().path
     local root_dir = require('neotest4j.project.functions').find_project_root(path)
 
-    local Project = require('neotest4j.project')
-    local p = Project:new(root_dir)
+    local project = require('neotest4j.project'):new(root_dir)
 
     return {
-        command = p:build_run_test_command(args),
+        command = project:build_run_test_command(args),
         context = {
-            project = p,
+            project = project,
         },
     }
+end
+
+---Parses test results.
+---@param spec table see neotest.RunSpec
+---@param _ table see neotest.StrategyResult
+---@param _ table neotest.Tree
+---@return table<string, table> see neotest.Result
+local function results(spec, _, _)
+    ---@type Project
+    local project = spec.context.project
+    return project:collect_test_results()
 end
 
 return {
@@ -33,7 +43,7 @@ return {
     root = require('neotest4j.project.functions').find_project_root,
     filter_dir = filter_dir,
     is_test_file = require('neotest4j.project.functions').is_test_file,
-    discover_positions = require('neotest4j.positions.discover_positions'),
+    discover_positions = require('neotest4j.project.functions').discover_tests,
     build_spec = build_spec,
-    results = require('neotest4j.collect_test_results'),
+    results = results,
 }

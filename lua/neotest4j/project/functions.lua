@@ -27,4 +27,5 @@ end
 return {
     find_project_root = find_project_root,
     is_test_file = is_test_file,
+    discover_tests = require('neotest4j.junit.discover_tests'),
 }

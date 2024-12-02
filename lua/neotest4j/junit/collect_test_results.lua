@@ -67,17 +67,11 @@ local function process_report(report, results)
     end
 end
 
----@param spec neotest.RunSpec
----@param result neotest.StrategyResult
----@param tree neotest.Tree
----@return table<string, neotest.Result>
-return function(spec, result, tree)
+---@param test_results_dir string a path to a directory containing junit test results.
+---@return table<string, table> see neotest.Result
+return function(test_results_dir)
     local log = require('neotest.logging')
 
-    ---@type Project
-    local project = spec.context.project
-
-    local test_results_dir = project:get_test_results_dir()
     local test_results = find_test_result_files(test_results_dir)
 
     local results = {}

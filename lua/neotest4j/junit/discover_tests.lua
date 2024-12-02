@@ -1,5 +1,3 @@
-local treesitter = require('neotest.lib.treesitter')
-
 local query = [[
 ;; Top level test class
 (
@@ -38,6 +36,8 @@ local query = [[
 --- @param file_path string
 --- @return table
 return function(file_path)
+    local treesitter = require('neotest.lib.treesitter')
+
     return treesitter.parse_positions(file_path, query, {
         nested_tests = true,
         position_id = 'require("neotest4j.positions.generate_position_id")',

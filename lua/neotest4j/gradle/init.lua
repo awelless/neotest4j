@@ -28,7 +28,7 @@ end
 
 ---Builds a full command to run.
 ---@param gradle Gradle
----@param ... string
+---@param ... string a gradle command to run.
 ---@return string[]
 local function build_command_spec(gradle, ...)
     local log = require('neotest.logging')
@@ -45,13 +45,14 @@ local function build_command_spec(gradle, ...)
 end
 
 ---Returns a path to a directory where the test results are stored.
+---@param gradle Gradle
 ---@return string
-function Gradle:get_test_results_dir()
+local function get_test_results_dir(gradle)
     local log = require('neotest.logging')
     local files = require('neotest.lib').files
     local process = require('neotest.lib').process
 
-    local command = build_command_spec(self, 'properties', '--property', 'testResultsDir')
+    local command = build_command_spec(gradle, 'properties', '--property', 'testResultsDir')
 
     local code, out = process.run(command, { stdout = true })
     if code ~= 0 then
@@ -69,11 +70,20 @@ function Gradle:get_test_results_dir()
     error('testResultsDir property was not found')
 end
 
+---Collect the results of executed tests.
+---@return table<string, table> see neotest.Result
+function Gradle:collect_test_results()
+    local junit = require('neotest4j.junit')
+
+    local test_results_dir = get_test_results_dir(self)
+    return junit.collect_test_results(test_results_dir)
+end
+
 ---Builds a spec to run the tests.
----@param args table see neotest.RunArgs
+---@param _ table see neotest.RunArgs
 ---@return table see neotest.RunSpec
-function Gradle:build_run_test_command(args)
-    return build_command_spec(self, 'test')
+function Gradle:build_run_test_command(_)
+    return build_command_spec(self, 'test', '--rerun')
 end
 
 return Gradle
