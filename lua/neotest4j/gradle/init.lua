@@ -84,6 +84,8 @@ end
 ---@param position table see neotest.Position
 ---@return string
 local function build_test_filter(root_dir, position)
+    local log = require('neotest.logging')
+
     local type = position.type
     if type == 'test' then
         return position.id
@@ -94,9 +96,10 @@ local function build_test_filter(root_dir, position)
     ---@type string
     local path = position.path
 
-    local _, prefix_end = path:find('^' .. root_dir .. '/src/test/java/')
+    local escaped_root_dir = root_dir:gsub('%p', '%%%1')
+    local _, prefix_end = path:find('^' .. escaped_root_dir .. '/src/test/java/')
     if prefix_end == nil then
-        -- The path doesn't start with the root_dir. Running all tests possible.
+        log.warn("The path doesn't start with the root_dir. Running all tests possible. Root dir:", root_dir, 'Path:', path)
         return '*'
     end
 
@@ -106,7 +109,7 @@ local function build_test_filter(root_dir, position)
         local extension_start = relative_path:find('%.java$')
 
         if extension_start == nil then
-            -- The file extension is unfamiliar. Running all tests possible.
+            log.warn("The file extension is unfamiliar. Running all tests possible. File:", relative_path)
             return '*'
         end
 
@@ -126,8 +129,8 @@ function Gradle:build_run_test_command(args)
     local position = args.tree:data()
     local filter = build_test_filter(self._root_dir, position)
 
-    log.trace('Test position: ', position)
-    log.trace('Test filter: ', filter)
+    log.trace('Test position:', position)
+    log.trace('Test filter:', filter)
 
     return build_command_spec(self, 'test', '--tests', filter, '--rerun')
 end

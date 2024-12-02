@@ -2,7 +2,7 @@ local query = [[
 ;; Top level test class
 (
     (package_declaration
-        (identifier) @package.name
+        (scoped_identifier) @package.name
     )
 
     (class_declaration
