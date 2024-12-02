@@ -35,7 +35,7 @@ local function build_command_spec(gradle, ...)
 
     local command = { gradle._executable, '--project-dir', gradle._root_dir }
 
-    for _, v in ipairs {...} do
+    for _, v in ipairs { ... } do
         table.insert(command, v)
     end
 
@@ -79,11 +79,57 @@ function Gradle:collect_test_results()
     return junit.collect_test_results(test_results_dir)
 end
 
+---Creates a gradle test filter for the position.
+---@param root_dir string
+---@param position table see neotest.Position
+---@return string
+local function build_test_filter(root_dir, position)
+    local type = position.type
+    if type == 'test' then
+        return position.id
+    end
+
+    -- 'namespace', 'file' and 'dir'.
+
+    ---@type string
+    local path = position.path
+
+    local _, prefix_end = path:find('^' .. root_dir .. '/src/test/java/')
+    if prefix_end == nil then
+        -- The path doesn't start with the root_dir. Running all tests possible.
+        return '*'
+    end
+
+    local relative_path = path:sub(prefix_end + 1)
+
+    if type == 'file' then
+        local extension_start = relative_path:find('%.java$')
+
+        if extension_start == nil then
+            -- The file extension is unfamiliar. Running all tests possible.
+            return '*'
+        end
+
+        relative_path = relative_path:sub(0, extension_start - 1)
+    end
+
+    local package_class_name = relative_path:gsub('/', '.')
+    return package_class_name
+end
+
 ---Builds a spec to run the tests.
----@param _ table see neotest.RunArgs
+---@param args table see neotest.RunArgs
 ---@return table see neotest.RunSpec
-function Gradle:build_run_test_command(_)
-    return build_command_spec(self, 'test', '--rerun')
+function Gradle:build_run_test_command(args)
+    local log = require('neotest.logging')
+
+    local position = args.tree:data()
+    local filter = build_test_filter(self._root_dir, position)
+
+    log.trace('Test position: ', position)
+    log.trace('Test filter: ', filter)
+
+    return build_command_spec(self, 'test', '--tests', filter, '--rerun')
 end
 
 return Gradle
